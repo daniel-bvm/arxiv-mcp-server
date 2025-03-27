@@ -1,0 +1,7 @@
+{
+    "command": "arxiv-mcp-server",
+    "args": [
+        "--storage-path", "."
+    ],
+    "env": {}
+}

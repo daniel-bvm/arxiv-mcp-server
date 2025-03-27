@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "arxiv-mcp-server"
 version = "0.2.8"
 description = "A flexible arXiv search and analysis service with MCP protocol support"
-readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
