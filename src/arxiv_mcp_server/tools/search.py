@@ -18,8 +18,9 @@ search_tool = types.Tool(
         "properties": {
             "query": {"type": "string", "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"},
             "max_results": {"type": "integer"},
-            "date_from": {"type": "string"},
-            "date_to": {"type": "string"},
+            "date_from": {"type": "string", "description": "Leave blank if no date filtering is required."},
+            "date_to": {"type": "string", "description": "Leave blank if no date filtering is required."},
+            "sort_by": {"type": "string", "enum": ["relevance", "last_updated_newest_first", "last_updated_oldest_first", "submitted_date_newest_first", "submitted_date_oldest_first"]},
             "categories": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["query"],
@@ -69,10 +70,40 @@ async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
             category_filter = " OR ".join(f"cat:{cat}" for cat in categories)
             query = f"({query}) AND ({category_filter})"
 
+        sort_by_mapping = {
+            "relevance": {
+                "sort_by": arxiv.SortCriterion.Relevance,
+                "sort_order": arxiv.SortOrder.Descending,
+            },
+            "last_updated_newest_first": {
+                "sort_by": arxiv.SortCriterion.LastUpdatedDate,
+                "sort_order": arxiv.SortOrder.Descending,
+            },
+            "last_updated_oldest_first": {
+                "sort_by": arxiv.SortCriterion.LastUpdatedDate,
+                "sort_order": arxiv.SortOrder.Ascending,
+            },
+            "submitted_date_newest_first": {
+                "sort_by": arxiv.SortCriterion.SubmittedDate,
+                "sort_order": arxiv.SortOrder.Descending,
+            },
+            "submitted_date_oldest_first": {
+                "sort_by": arxiv.SortCriterion.SubmittedDate,
+                "sort_order": arxiv.SortOrder.Ascending,
+            },
+        }
+
+        sort_by = arxiv.SortCriterion.Relevance
+        sort_order = arxiv.SortOrder.Descending
+        if arguments.get("sort_by") in sort_by_mapping:
+            sort_by = sort_by_mapping[arguments["sort_by"]]["sort_by"]
+            sort_order = sort_by_mapping[arguments["sort_by"]]["sort_order"]
+
         search = arxiv.Search(
             query=query,
             max_results=max_results,
-            sort_by=arxiv.SortCriterion.Relevance,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
         # Process results with date filtering
