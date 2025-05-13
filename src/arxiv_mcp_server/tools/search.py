@@ -16,7 +16,7 @@ search_tool = types.Tool(
     inputSchema={
         "type": "object",
         "properties": {
-            "query": {"type": "string"},
+            "query": {"type": "string", "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"},
             "max_results": {"type": "integer"},
             "date_from": {"type": "string"},
             "date_to": {"type": "string"},
@@ -72,7 +72,7 @@ async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
         search = arxiv.Search(
             query=query,
             max_results=max_results,
-            sort_by=arxiv.SortCriterion.SubmittedDate,
+            sort_by=arxiv.SortCriterion.Relevance,
         )
 
         # Process results with date filtering
