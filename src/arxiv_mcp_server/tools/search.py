@@ -111,12 +111,12 @@ async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
         try:
             date_from = (
                 parser.parse(arguments["date_from"]).replace(tzinfo=timezone.utc)
-                if "date_from" in arguments
+                if "date_from" in arguments and arguments["date_from"] != ""
                 else None
             )
             date_to = (
                 parser.parse(arguments["date_to"]).replace(tzinfo=timezone.utc)
-                if "date_to" in arguments
+                if "date_to" in arguments and arguments["date_to"] != ""
                 else None
             )
         except (ValueError, TypeError) as e:
