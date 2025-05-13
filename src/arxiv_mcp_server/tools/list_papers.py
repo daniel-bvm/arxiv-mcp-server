@@ -26,7 +26,7 @@ def list_papers() -> list[str]:
 
 
 async def handle_list_papers(
-    arguments: Optional[Dict[str, Any]] = None
+    arguments: Optional[Dict[str, Any]] = None,
 ) -> List[types.TextContent]:
     """Handle requests to list all stored papers."""
     try:

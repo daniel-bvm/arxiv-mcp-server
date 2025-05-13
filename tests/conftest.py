@@ -7,13 +7,16 @@ from unittest.mock import MagicMock, AsyncMock
 import arxiv
 from pathlib import Path
 
+
 class MockAuthor:
     def __init__(self, name):
         self.name = name
 
+
 class MockLink:
     def __init__(self, href):
         self.href = href
+
 
 @pytest.fixture
 def mock_paper():
@@ -32,6 +35,7 @@ def mock_paper():
     paper.links = [MockLink("https://arxiv.org/abs/2103.12345")]
     return paper
 
+
 @pytest.fixture
 def mock_client(mock_paper):
     """Create a mock arxiv client with predefined behavior."""
@@ -39,16 +43,19 @@ def mock_client(mock_paper):
     client.results.return_value = [mock_paper]
     return client
 
+
 @pytest.fixture
 def temp_storage_path():
     """Create a temporary directory for paper storage during tests."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
 
+
 @pytest.fixture
 def mock_pdf_content():
     """Create mock PDF content for testing."""
     return b"Mock PDF Content"
+
 
 @pytest.fixture
 def mock_http_response():
@@ -58,6 +65,7 @@ def mock_http_response():
     response.__aenter__.return_value = response
     response.read.return_value = b"Mock PDF Content"
     return response
+
 
 @pytest.fixture
 def mock_http_session(mock_http_response):

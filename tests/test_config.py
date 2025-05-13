@@ -2,10 +2,9 @@
 
 import os
 import sys
-import pytest
-from unittest.mock import patch, MagicMock
 from pathlib import Path
 from arxiv_mcp_server.config import Settings
+from unittest.mock import patch
 
 
 @patch.object(Path, "mkdir")
@@ -120,5 +119,13 @@ def test_path_normalization_with_windows_paths():
         # Test path joining logic works correctly
         subpath = Path(windows_path) / "subdir"
         assert str(subpath).endswith("subdir")
-        assert str(subpath).startswith(windows_path)
-        assert str(subpath) == Path(windows_path).joinpath("subdir").as_posix()
+
+        # The following check is problematic on real Windows systems
+        # where the path separator may be different
+        # Check only that the base path is contained in the result (ignoring separator differences)
+        base_path_norm = windows_path.replace("\\", "/").replace("//", "/")
+        subpath_norm = str(subpath).replace("\\", "/").replace("//", "/")
+        assert base_path_norm in subpath_norm
+
+        # Instead of checking exact string equality, verify the Path objects are equivalent
+        assert subpath == Path(windows_path).joinpath("subdir")

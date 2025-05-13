@@ -4,11 +4,6 @@ from typing import List, Dict, Optional
 from mcp.types import Prompt, PromptMessage, TextContent, GetPromptResult
 from .prompts import PROMPTS
 from .deep_research_analysis_prompt import PAPER_ANALYSIS_PROMPT
-from .prompt_manager import (
-    get_research_session,
-    create_research_session,
-    update_session_from_prompt,
-)
 
 
 # Legacy global research context - used as fallback when no session_id is provided
@@ -30,14 +25,6 @@ class ResearchContext:
 
 # Global research context for backward compatibility
 _research_context = ResearchContext()
-
-# Citation and evidence standards by domain
-CITATION_STANDARDS = {
-    "computer_science": "Include specific section numbers and algorithm references",
-    "physics": "Reference equations and experimental results by number",
-    "biology": "Include methodology details and statistical significance",
-    "default": "Reference specific findings and methodologies from the papers",
-}
 
 # Output structure for deep paper analysis
 OUTPUT_STRUCTURE = """
@@ -84,28 +71,8 @@ async def get_prompt(
         if arg.required and (arg.name not in arguments or not arguments.get(arg.name)):
             raise ValueError(f"Missing required argument: {arg.name}")
 
-    # Get research context - either from session or fallback to global
-    context = None
-    if session_id:
-        try:
-            # Try to get existing session
-            session_data = get_research_session(session_id)
-            context = session_data
-        except ValueError:
-            # Create new session if it doesn't exist
-            create_research_session(session_id, arguments)
-            context = get_research_session(session_id)
-
-        # Update session with current prompt info
-        update_session_from_prompt(session_id, name, arguments)
-    else:
-        # Fallback to global context for backward compatibility
-        _research_context.update_from_arguments(arguments)
-        context = _research_context
-
-    # Determine domain-specific guidance
-    domain = "default"  # Default domain since it's no longer required
-    citation_guidance = CITATION_STANDARDS.get(domain, CITATION_STANDARDS["default"])
+    # Use only global research context since research sessions are removed
+    _research_context.update_from_arguments(arguments)
 
     # Process deep-paper-analysis prompt
     paper_id = arguments.get("paper_id", "")
@@ -113,27 +80,16 @@ async def get_prompt(
     # Add context from previous papers if available
     previous_papers_context = ""
 
-    if session_id:
-        # Get papers from session
-        papers = context.get("papers", {})
-        if len(papers) > 1:
-            previous_ids = [pid for pid in papers.keys() if pid != paper_id]
-            if previous_ids:
-                previous_papers_context = f"\nI've previously analyzed papers: {', '.join(previous_ids)}. If relevant, note connections to these works."
-    else:
-        # Use global context
-        if len(_research_context.explored_papers) > 1:
-            previous_ids = [
-                pid
-                for pid in _research_context.explored_papers.keys()
-                if pid != paper_id
-            ]
-            if previous_ids:
-                previous_papers_context = f"\nI've previously analyzed papers: {', '.join(previous_ids)}. If relevant, note connections to these works."
+    # Use global context
+    if len(_research_context.explored_papers) > 1:
+        previous_ids = [
+            pid for pid in _research_context.explored_papers.keys() if pid != paper_id
+        ]
+        if previous_ids:
+            previous_papers_context = f"\nI've previously analyzed papers: {', '.join(previous_ids)}. If relevant, note connections to these works."
 
-    # Track this analysis in context (for global context only, session is updated above)
-    if not session_id:
-        _research_context.paper_analyses[paper_id] = {"analysis": "complete"}
+    # Track this analysis in context (for global context only)
+    _research_context.paper_analyses[paper_id] = {"analysis": "complete"}
 
     return GetPromptResult(
         messages=[
@@ -141,8 +97,7 @@ async def get_prompt(
                 role="user",
                 content=TextContent(
                     type="text",
-                    text=f"Analyze paper {paper_id}.{previous_papers_context}\n\n"
-                    f"{citation_guidance}\n\n{OUTPUT_STRUCTURE}\n\n{PAPER_ANALYSIS_PROMPT}",
+                    text=f"Analyze paper {paper_id}.{previous_papers_context}\n\n{OUTPUT_STRUCTURE}\n\n{PAPER_ANALYSIS_PROMPT}",
                 ),
             )
         ]

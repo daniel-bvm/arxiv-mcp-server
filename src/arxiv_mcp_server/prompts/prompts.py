@@ -45,7 +45,9 @@ PROMPTS = {
         description="Synthesize findings across multiple papers",
         arguments=[
             PromptArgument(
-                name="paper_ids", description="Comma-separated list of arXiv paper IDs", required=True
+                name="paper_ids",
+                description="Comma-separated list of arXiv paper IDs",
+                required=True,
             ),
             PromptArgument(
                 name="synthesis_type",
@@ -64,7 +66,9 @@ PROMPTS = {
         description="Formulate research questions based on literature",
         arguments=[
             PromptArgument(
-                name="paper_ids", description="Comma-separated list of arXiv paper IDs", required=True
+                name="paper_ids",
+                description="Comma-separated list of arXiv paper IDs",
+                required=True,
             ),
             PromptArgument(
                 name="topic", description="Research topic or question", required=True

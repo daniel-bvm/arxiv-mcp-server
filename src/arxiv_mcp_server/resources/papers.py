@@ -40,10 +40,9 @@ class PaperManager:
             paper.download_pdf(dirpath=self.storage_path, filename=paper_pdf_path)
             markdown = pymupdf4llm.to_markdown(paper_pdf_path, show_progress=False)
 
-            async with aiofiles.open(paper_md_path, "w") as f:
+            async with aiofiles.open(paper_md_path, "w", encoding="utf-8") as f:
                 await f.write(markdown)
 
-            paper_pdf_path.unlink()  # Remove PDF after conversion
             return True
 
         except StopIteration:
@@ -98,5 +97,5 @@ class PaperManager:
         if not paper_path.exists():
             raise ValueError(f"Paper {paper_id} not found in storage")
 
-        async with aiofiles.open(paper_path, "r") as f:
+        async with aiofiles.open(paper_path, "r", encoding="utf-8") as f:
             return await f.read()
