@@ -16,12 +16,32 @@ search_tool = types.Tool(
     inputSchema={
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"},
-            "max_results": {"type": "integer"},
-            "date_from": {"type": "string", "description": "Leave blank if no date filtering is required."},
-            "date_to": {"type": "string", "description": "Leave blank if no date filtering is required."},
-            "sort_by": {"type": "string", "enum": ["relevance", "last_updated_newest_first", "last_updated_oldest_first", "submitted_date_newest_first", "submitted_date_oldest_first"]},
-            "categories": {"type": "array", "items": {"type": "string"}},
+            "query": {
+                "type": "string",
+                "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "The maximum number of results to return. Default is 10. Maximum is 50."
+            },
+            "date_from": {
+                "type": "string",
+                "description": "The start date for date filtering. Leave blank if no date filtering is required."
+            },
+            "date_to": {
+                "type": "string",
+                "description": "The end date for date filtering. Leave blank if no date filtering is required."
+            },
+            "sort_by": {
+                "type": "string",
+                "enum": ["relevance", "last_updated_newest_first", "last_updated_oldest_first", "submitted_date_newest_first", "submitted_date_oldest_first"],
+                "description": "The sorting order of the results. Default is relevance."
+            },
+            "categories": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "The categories to search in. Leave blank if no category filtering is required.",
+            },
         },
         "required": ["query"],
     },

@@ -1,4 +1,4 @@
-docker build --pull -t arxiv-mcp-server .
+docker build -t arxiv-mcp-server .
 docker run  --rm -it \
     --network=network-agent-external  \
     --add-host=localmodel:host-gateway \
