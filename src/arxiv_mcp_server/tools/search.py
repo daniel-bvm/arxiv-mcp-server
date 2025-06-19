@@ -79,13 +79,34 @@ def _process_paper(paper: arxiv.Result) -> Dict[str, Any]:
 
 
 async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
-    """Handle paper search requests."""
+    """Handle paper search requests.
+
+    Automatically adds field specifiers to plain queries for better relevance.
+    This fixes issue #33 where queries sorted by date returned irrelevant results.
+    """
     try:
         client = arxiv.Client()
         max_results = min(int(arguments.get("max_results", 10)), settings.MAX_RESULTS)
 
         # Build search query with category filtering
         query = arguments["query"]
+
+        # Add field specifier if not already present
+        # This ensures the query actually searches the content
+        if not any(field in query for field in ["all:", "ti:", "abs:", "au:", "cat:"]):
+            # Convert plain query to use all: field for better results
+            # Handle quoted phrases
+            if '"' in query:
+                # Keep quoted phrases intact
+                query = f"all:{query}"
+            else:
+                # For unquoted multi-word queries, use AND operator
+                terms = query.split()
+                if len(terms) > 1:
+                    query = " AND ".join(f"all:{term}" for term in terms)
+                else:
+                    query = f"all:{query}"
+
         if categories := arguments.get("categories"):
             category_filter = " OR ".join(f"cat:{cat}" for cat in categories)
             query = f"({query}) AND ({category_filter})"

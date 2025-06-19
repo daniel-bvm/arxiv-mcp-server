@@ -60,3 +60,24 @@ async def test_search_with_invalid_dates(mock_client):
         )
 
         assert result[0].text.startswith("Error: Invalid date format")
+
+
+@pytest.mark.asyncio
+async def test_search_query_field_specifier_fix(mock_client):
+    """Test that plain queries get field specifiers for better relevance (issue #33)."""
+    with patch("arxiv.Client", return_value=mock_client):
+        with patch("arxiv.Search") as search_mock:
+            # Test multi-word query
+            await handle_search({"query": "quantum computing", "max_results": 1})
+            search_mock.assert_called()
+            assert search_mock.call_args[1]["query"] == "all:quantum AND all:computing"
+
+            # Test single word query
+            search_mock.reset_mock()
+            await handle_search({"query": "transformer", "max_results": 1})
+            assert search_mock.call_args[1]["query"] == "all:transformer"
+
+            # Test query with existing field specifier (should not be modified)
+            search_mock.reset_mock()
+            await handle_search({"query": "ti:neural networks", "max_results": 1})
+            assert search_mock.call_args[1]["query"] == "ti:neural networks"
