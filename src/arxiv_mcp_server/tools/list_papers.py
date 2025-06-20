@@ -6,6 +6,7 @@ import arxiv
 from typing import Dict, Any, List, Optional
 import mcp.types as types
 from ..config import Settings
+from ..utils import arxiv_client_retry
 
 settings = Settings()
 
@@ -34,7 +35,7 @@ async def handle_list_papers(
 
         client = arxiv.Client()
 
-        results = client.results(arxiv.Search(id_list=papers))
+        results = arxiv_client_retry(client, client.results)(arxiv.Search(id_list=papers))
 
         response_data = {
             "total_papers": len(papers),

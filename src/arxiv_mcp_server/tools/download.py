@@ -11,6 +11,7 @@ import mcp.types as types
 from ..config import Settings
 import pymupdf4llm
 import logging
+from ..utils import arxiv_client_retry
 
 logger = logging.getLogger("arxiv-mcp-server")
 settings = Settings()
@@ -180,7 +181,8 @@ async def handle_download(arguments: Dict[str, Any]) -> List[types.TextContent]:
         )
 
         # Download PDF
-        paper = next(client.results(arxiv.Search(id_list=[paper_id])))
+        paper = next(arxiv_client_retry(client, client.results)(arxiv.Search(id_list=[paper_id])))
+
         paper.download_pdf(dirpath=pdf_path.parent, filename=pdf_path.name)
 
         # Update status and start conversion

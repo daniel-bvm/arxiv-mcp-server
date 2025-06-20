@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from dateutil import parser
 import mcp.types as types
 from ..config import Settings
+from ..utils import arxiv_client_retry
 
 settings = Settings()
 
@@ -18,7 +19,7 @@ search_tool = types.Tool(
         "properties": {
             "query": {
                 "type": "string",
-                "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"
+                "description": "The search_query parameter defines the criteria for querying arXiv's API, using a Lucene-like syntax. Queries target specific metadata fields with the format field:value, where supported fields include ti (title), au (author), abs (abstract), co (comments), jr (journal reference), rn (report number), id (arXiv ID), and all (all of the above). There is no filter for categories. Field values can be quoted for multi-word terms, and Boolean operators (AND, OR, ANDNOT) must be capitalized. Grouping with parentheses is allowed to build complex expressions. Example query: (ti:GAN OR abs:GAN) AND (au:\"Ian Goodfellow\")"
             },
             "max_results": {
                 "type": "integer",
@@ -40,7 +41,7 @@ search_tool = types.Tool(
             "categories": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "The categories to search in. Leave blank if no category filtering is required.",
+                "description": "Category filter. Leave blank if no category filtering is required. Example: [\"cs.CV\", \"cs.LG\"]",
             },
         },
         "required": ["query"],
@@ -85,27 +86,10 @@ async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
     This fixes issue #33 where queries sorted by date returned irrelevant results.
     """
     try:
-        client = arxiv.Client()
         max_results = min(int(arguments.get("max_results", 10)), settings.MAX_RESULTS)
 
         # Build search query with category filtering
         query = arguments["query"]
-
-        # Add field specifier if not already present
-        # This ensures the query actually searches the content
-        if not any(field in query for field in ["all:", "ti:", "abs:", "au:", "cat:"]):
-            # Convert plain query to use all: field for better results
-            # Handle quoted phrases
-            if '"' in query:
-                # Keep quoted phrases intact
-                query = f"all:{query}"
-            else:
-                # For unquoted multi-word queries, use AND operator
-                terms = query.split()
-                if len(terms) > 1:
-                    query = " AND ".join(f"all:{term}" for term in terms)
-                else:
-                    query = f"all:{query}"
 
         if categories := arguments.get("categories"):
             category_filter = " OR ".join(f"cat:{cat}" for cat in categories)
@@ -166,8 +150,9 @@ async def handle_search(arguments: Dict[str, Any]) -> List[types.TextContent]:
                     type="text", text=f"Error: Invalid date format - {str(e)}"
                 )
             ]
-
-        for paper in client.results(search):
+        
+        client = arxiv.Client()
+        for paper in arxiv_client_retry(client, client.results)(search):
             if _is_within_date_range(paper.published, date_from, date_to):
                 results.append(_process_paper(paper))
 
